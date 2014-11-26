@@ -1,0 +1,16 @@
+このDockerイメージから作成されるコンテナは、永続化されたmysql-dataコンテナがデータ保存先です。
+mysql-dataコンテナへの初回接続時はexitしてしまうので、mysqlコンテナの再作成＆起動が必要なようです。
+
+docker run -d --name="mysql" --hostname="mysql" -p 6033:3306 --volumes-from mysql-data typista/docker:mysql
+docker rm -f mysql
+docker run -d --name="mysql" --hostname="mysql" -p 6033:3306 --volumes-from mysql-data typista/docker:mysql
+
+その後、mysqlコンテナにdocker-enterします。
+sudo docker-enter mysql
+
+
+(おそらく)初回database作成時のみ、以下の権限設定が必要。
+UPDATE mysql.user SET Password=PASSWORD('genius!!') WHERE User='root';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+flush privileges;
+
