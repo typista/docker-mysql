@@ -9,15 +9,27 @@ else
 	FULLPATH=$(cd `dirname $0`; pwd)/`basename $0`
 	DIR=`dirname $FULLPATH`
 	REPO=`basename $DIR`
-    REPO=`echo $REPO | sed -r "s/docker\-//g"`
-    IMAGE=$USER/$REPO
+	REPO=`echo $REPO | sed -r "s/docker\-//g"`
+	IMAGE=$USER/$REPO
 	if [ "$3" != "" ];then
-    	IMAGE=$IMAGE:$3
-    fi
+		IMAGE=$IMAGE:$3
+	else
+		VERSION=`docker images | grep "$IMAGE " | sort | tail -1 | awk '{print $2}'`
+		if [ "$VERSION" != "" ];then
+			IMAGE=$IMAGE:$VERSION
+		fi
+	fi
 	docker run -d --privileged --restart=always --name="$__FQDN__" --hostname="$__HOSTNAME__" \
 		-p $__PORT__:3306 \
 		--volumes-from mysql-data \
 		$IMAGE
+
+	RESTART=./restart.sh
+	touch $RESTART
+	echo "docker rm -f $__FQDN__" >> $RESTART
+	echo "$0 $__FQDN__ $__PORT__" >> $RESTART
+	chmod +x $RESTART
+
 	BOOT=./container/docker-boot-$__HOSTNAME__.sh
 	BOOT_OFF=./container/docker-boot-off-$__HOSTNAME__.sh
 	REMOVE=./container/docker-remove-$__HOSTNAME__.sh
